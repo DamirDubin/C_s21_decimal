@@ -9,20 +9,20 @@ void s21_copy(s21_decimal src, s21_decimal *dst) {
 }
 
 int s21_get_bit(s21_decimal dec, int bit) {
-  int word = bit / 32;
-  int offset = bit % 32;
-  return !!(dec.bits[word] & (1U << offset));
+  int word = bit / 32;    // определяем слово (0-3)
+  int offset = bit % 32;  // смещение внутри слова
+  return !!(dec.bits[word] & (1U << offset));  // возвращает бит
 }
 
 int s21_shift_left(s21_decimal *dec) {
   int carry = 0;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {  // только мантисса (0-2)
     unsigned long long value = (unsigned int)dec->bits[i];
-    value = (value << 1) | carry;
+    value = (value << 1) | carry;  // сдвиг + перенос
     carry = value >> 32;
     dec->bits[i] = (int)(value & 0xFFFFFFFF);
   }
-  return carry;
+  return carry;  // 1 если переполнение
 }
 
 int s21_shift_right(s21_decimal *dec) {
@@ -37,12 +37,12 @@ int s21_shift_right(s21_decimal *dec) {
 }
 
 int s21_mantissa_less(s21_decimal a, s21_decimal b) {
-  for (int i = 2; i >= 0; i--) {
+  for (int i = 2; i >= 0; i--) {  // сначала старшие биты
     if (a.bits[i] != b.bits[i]) {
       return a.bits[i] < b.bits[i];
     }
   }
-  return 0;
+  return 0;  // равны
 }
 
 int s21_mul_by_10(s21_decimal *value) {
@@ -53,7 +53,7 @@ int s21_mul_by_10(s21_decimal *value) {
     value->bits[i] = (unsigned int)(digit & 0xFFFFFFFF);
     carry = digit >> 32;
   }
-  return carry ? 1 : 0;
+  return carry ? 1 : 0;  // переполнение
 }
 
 int s21_div_by_10(s21_decimal *value) {
@@ -71,16 +71,16 @@ void s21_normalize_exponents(s21_decimal *a, s21_decimal *b) {
   int exp_b = s21_get_exp(b);
 
   while (exp_a != exp_b) {
-    if (exp_a < exp_b) {
-      if (s21_mul_by_10(a) == 0) {
+    if (exp_a < exp_b) {            // для а
+      if (s21_mul_by_10(a) == 0) {  // увеличиваем а
         exp_a++;
         s21_set_exp(a, exp_a);
-      } else {
+      } else {  // если переполнение уменьшаем б
         s21_div_by_10(b);
         exp_b--;
         s21_set_exp(b, exp_b);
       }
-    } else {
+    } else {  // для б
       if (s21_mul_by_10(b) == 0) {
         exp_b++;
         s21_set_exp(b, exp_b);
@@ -107,9 +107,9 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   int sign2 = s21_get_sign(&value_2);
   int result_sign = 0;
 
-  if (sign1 == sign2) {
+  if (sign1 == sign2) {  // одинаковые знаки значит плюсуем
     unsigned long long carry = 0;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {  // сложение мантисс с переносом
       unsigned long long ua = (unsigned int)value_1.bits[i];
       unsigned long long ub = (unsigned int)value_2.bits[i];
       unsigned long long sum = ua + ub + carry;
@@ -121,7 +121,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
     if (carry) {
       status = result_sign ? S21_ERROR_SMALL : S21_ERROR_BIG;
     }
-  } else {
+  } else {  // разные знаки значит вычитаем
     if (s21_mantissa_less(value_1, value_2)) {
       s21_decimal tmp = value_1;
       value_1 = value_2;
@@ -132,7 +132,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
     }
 
     unsigned long long borrow = 0;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {  // вычитаем из большего меньшее
       unsigned long long ua = (unsigned int)value_1.bits[i];
       unsigned long long ub = (unsigned int)value_2.bits[i];
       unsigned long long diff = ua - ub - borrow;
@@ -204,7 +204,7 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   s21_decimal shifted = value_1;
 
   for (int i = 0; i < 96 && status == S21_OK; i++) {
-    if (s21_get_bit(value_2, i)) {
+    if (s21_get_bit(value_2, i)) {  // сдвиг на й позиций
       s21_decimal current = shifted;
       for (int j = 0; j < i; j++) {
         if (s21_shift_left(&current)) {
@@ -212,15 +212,16 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
           break;
         }
       }
-      if (status == S21_OK) status = s21_add(current, temp, &temp);
+      if (status == S21_OK)
+        status = s21_add(current, temp, &temp);  // добавляем к результату
     }
   }
 
-  while (status == S21_OK &&
-         (result_exp > S21_MAX_EXP || temp.bits[2] || temp.bits[1])) {
+  while (status == S21_OK && (result_exp > S21_MAX_EXP || temp.bits[2] ||
+                              temp.bits[1])) {  // корректируем экспо
     if (result_exp <= 0) {
       status = result_sign ? S21_ERROR_SMALL : S21_ERROR_BIG;
-    } else {
+    } else {  // деление на 10 при переполнении
       s21_div_by_10(&temp);
       result_exp--;
     }
@@ -270,24 +271,27 @@ int s21_div(s21_decimal dividend, s21_decimal divisor, s21_decimal *result) {
   s21_set_exp(&divisor, 0);
 
   int scale = 0;
-  while (scale < 28 && s21_mantissa_less(dividend, divisor)) {
+  while (scale < 28 && s21_mantissa_less(dividend, divisor)) {  // нормализация
     s21_mul_by_10(&dividend);
     scale++;
   }
 
   s21_decimal quotient = {0};
   s21_decimal remainder = {0};
-  s21_integer_division(dividend, divisor, &quotient, &remainder);
+  s21_integer_division(dividend, divisor, &quotient,
+                       &remainder);  // целочисленное деление
 
   int fractional_digits = 0;
   s21_decimal fractional = {0};
   s21_handle_division_remainder(divisor, &remainder, &fractional,
-                                &fractional_digits, 28 - scale);
+                                &fractional_digits,
+                                28 - scale);  // обработка дробной части
 
   s21_decimal total;
   s21_copy(quotient, &total);
 
-  for (int i = 0; i < fractional_digits; i++) {
+  for (int i = 0; i < fractional_digits;
+       i++) {  // соединяем целую и дробную часть
     s21_mul_by_10(&total);
   }
   status = s21_add(total, fractional, &total);
@@ -308,17 +312,17 @@ int s21_div(s21_decimal dividend, s21_decimal divisor, s21_decimal *result) {
 }
 
 int s21_is_less(s21_decimal a, s21_decimal b) {
-  if (s21_get_sign(&a) && !s21_get_sign(&b)) return 1;
-  if (!s21_get_sign(&a) && s21_get_sign(&b)) return 0;
+  if (s21_get_sign(&a) && !s21_get_sign(&b)) return 1;  // отриц < полож
+  if (!s21_get_sign(&a) && s21_get_sign(&b)) return 0;  // полож > отриц
 
   s21_normalize_exponents(&a, &b);
   int sign = s21_get_sign(&a);
 
-  for (int i = 2; i >= 0; i--) {
+  for (int i = 2; i >= 0; i--) {  // побайтовое сравнение от старших к младшим
     if (a.bits[i] < b.bits[i]) return sign ? 0 : 1;
     if (a.bits[i] > b.bits[i]) return sign ? 1 : 0;
   }
-  return 0;
+  return 0;  // равны
 }
 
 int s21_is_less_or_equal(s21_decimal a, s21_decimal b) {
@@ -354,7 +358,7 @@ int s21_from_int_to_decimal(int src, s21_decimal *dst) {
     s21_set_sign(dst, 1);
     src = -src;
   }
-  dst->bits[0] = src;
+  dst->bits[0] = src;  // младшее слово
   return S21_OK;
 }
 
@@ -365,7 +369,7 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   float_parser parser;
   parser.f = src;
 
-  if (parser.parts.exponent == 0xFF) {
+  if (parser.parts.exponent == 0xFF) {  // проверки особых значений
     return S21_ERROR_CONV;
   }
 
@@ -379,7 +383,8 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   int exp = 0;
   double temp = abs_src;
 
-  while (exp < 28 && temp < 1e7 && temp * 10.0 <= (double)MAX_DECIMAL) {
+  while (exp < 28 && temp < 1e7 &&
+         temp * 10.0 <= (double)MAX_DECIMAL) {  // нормализация
     temp *= 10.0;
     exp++;
   }
@@ -415,13 +420,13 @@ int s21_from_decimal_to_float(s21_decimal src, float *dst) {
   double result = 0.0;
   for (int i = 0; i < 96; i++) {
     if (s21_get_bit(src, i)) {
-      result += pow(2.0, i);
+      result += pow(2.0, i);  // суммирование битов
     }
   }
 
   int exp = s21_get_exp(&src);
   if (exp > 0) {
-    result /= pow(10.0, exp);
+    result /= pow(10.0, exp);  // учет экспо
   }
 
   *dst = (float)result;
@@ -451,12 +456,12 @@ int s21_round(s21_decimal value, s21_decimal *result) {
   s21_set_sign(&value, 0);
 
   s21_decimal truncated;
-  s21_truncate(value, &truncated);
+  s21_truncate(value, &truncated);  // целая часть
 
   s21_decimal fractional;
-  s21_sub(value, truncated, &fractional);
+  s21_sub(value, truncated, &fractional);  // дробная часть
 
-  s21_decimal half = {{5, 0, 0, 0}};
+  s21_decimal half = {{5, 0, 0, 0}};  // проверка >= 0.5
   s21_set_exp(&half, 1);
 
   *result = truncated;
@@ -464,7 +469,7 @@ int s21_round(s21_decimal value, s21_decimal *result) {
   if (s21_is_greater(fractional, half) ||
       (s21_is_equal(fractional, half) && (truncated.bits[0] & 1))) {
     s21_decimal one = {{1, 0, 0, 0}};
-    s21_add(*result, one, result);
+    s21_add(*result, one, result);  // округление вверх
   }
 
   s21_set_sign(result, sign);
@@ -474,10 +479,10 @@ int s21_round(s21_decimal value, s21_decimal *result) {
 int s21_truncate(s21_decimal value, s21_decimal *result) {
   int exp = s21_get_exp(&value);
   while (exp-- > 0) {
-    s21_div_by_10(&value);
+    s21_div_by_10(&value);  // деление на 10^эксп
   }
   *result = value;
-  s21_set_exp(result, 0);
+  s21_set_exp(result, 0);  // сброс экспо
   return S21_OK;
 }
 
