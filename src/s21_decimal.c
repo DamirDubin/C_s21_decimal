@@ -20,7 +20,8 @@ int s21_shift_left(s21_decimal *dec) {
     unsigned long long value = (unsigned int)dec->bits[i];
     value = (value << 1) | carry;  // сдвиг + перенос
     carry = value >> 32;
-    dec->bits[i] = (int)(value & 0b11111111111111111111111111111111);  // сохраняем 32 бита
+    dec->bits[i] =
+        (int)(value & 0b11111111111111111111111111111111);  // сохраняем 32 бита
   }
   return carry;  // 1 если переполнение (остался перенос после сдвига старшего
                  // слова)
@@ -168,24 +169,21 @@ void s21_integer_division(s21_decimal dividend, s21_decimal divisor,
 
   while (loop) {
     while (s21_is_less_or_equal(current, *remainder) &&
-           !(current.bits[2] & 0x80000000)) {
-      s21_shift_left(&current);
+           !(current.bits[2] & 0x80000000)) { // !переполнение
+      s21_shift_left(&current); // умножение на 2
       s21_shift_left(&multiple);
     }
 
-    if (s21_is_greater(current, *remainder)) {
-      s21_shift_right(&current);
-      s21_shift_right(&multiple);
-    }
+    s21_shift_right(&current); // откат назад на 1 шаг
+    s21_shift_right(&multiple);
 
     s21_add(*quotient, multiple, quotient);
     s21_sub(*remainder, current, remainder);
 
-    if (s21_is_less(*remainder, divisor)) {
+    if (s21_is_less(*remainder, divisor)) { // остаток < делителя
       loop = 0;
     } else {
-      s21_copy(divisor, &current);
-      s21_init_decimal(&multiple);
+      s21_copy(divisor, &current); // сброс рабочих переменных
       multiple.bits[0] = 1;
     }
   }
