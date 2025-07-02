@@ -9,9 +9,9 @@ void s21_copy(s21_decimal src, s21_decimal *dst) {
 }
 
 int s21_get_bit(s21_decimal dec, int bit) {
-  int word = bit / 32;    // определяем слово (0-3)
-  int offset = bit % 32;  // смещение внутри слова
-  return !!(dec.bits[word] & (1U << offset));  // возвращает бит
+  int word = bit / 32;  // определяем в каком слове находится бит (0-3)
+  int offset = bit % 32;  // позиция бита внутри слова
+  return !!(dec.bits[word] & (1U << offset));  // извлекаем и возвращаем бит
 }
 
 int s21_shift_left(s21_decimal *dec) {
@@ -20,9 +20,10 @@ int s21_shift_left(s21_decimal *dec) {
     unsigned long long value = (unsigned int)dec->bits[i];
     value = (value << 1) | carry;  // сдвиг + перенос
     carry = value >> 32;
-    dec->bits[i] = (int)(value & 0xFFFFFFFF);
+    dec->bits[i] = (int)(value & 0b11111111111111111111111111111111);  // сохраняем 32 бита
   }
-  return carry;  // 1 если переполнение
+  return carry;  // 1 если переполнение (остался перенос после сдвига старшего
+                 // слова)
 }
 
 int s21_shift_right(s21_decimal *dec) {
@@ -37,9 +38,9 @@ int s21_shift_right(s21_decimal *dec) {
 }
 
 int s21_mantissa_less(s21_decimal a, s21_decimal b) {
-  for (int i = 2; i >= 0; i--) {  // сначала старшие биты
+  for (int i = 2; i >= 0; i--) {  // сравниваем от старших слов к младшим
     if (a.bits[i] != b.bits[i]) {
-      return a.bits[i] < b.bits[i];
+      return a.bits[i] < b.bits[i];  // нашли различие - возвращаем результат
     }
   }
   return 0;  // равны
@@ -47,23 +48,25 @@ int s21_mantissa_less(s21_decimal a, s21_decimal b) {
 
 int s21_mul_by_10(s21_decimal *value) {
   unsigned long long carry = 0;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {  // для каждого слова мантиссы
     unsigned long long digit = (unsigned int)value->bits[i];
     digit = digit * 10 + carry;
-    value->bits[i] = (unsigned int)(digit & 0xFFFFFFFF);
+    value->bits[i] = (unsigned int)(digit & 0xFFFFFFFF);  // сохраняем 32 бита
     carry = digit >> 32;
   }
-  return carry ? 1 : 0;  // переполнение
+  return carry ? 1 : 0;  // 1 если переполнение
 }
 
 int s21_div_by_10(s21_decimal *value) {
   unsigned long long remainder = 0;
   for (int i = 2; i >= 0; i--) {
-    unsigned long long digit = (remainder << 32) | (unsigned int)value->bits[i];
-    value->bits[i] = (unsigned int)(digit / 10);
-    remainder = digit % 10;
+    unsigned long long digit =
+        (remainder << 32) |
+        (unsigned int)value->bits[i];  // формируем 64-бит значение
+    value->bits[i] = (unsigned int)(digit / 10);  // целая часть
+    remainder = digit % 10;                       // остаток
   }
-  return (int)remainder;
+  return (int)remainder;  // возвращаем остаток от деления
 }
 
 void s21_normalize_exponents(s21_decimal *a, s21_decimal *b) {
