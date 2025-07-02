@@ -169,21 +169,21 @@ void s21_integer_division(s21_decimal dividend, s21_decimal divisor,
 
   while (loop) {
     while (s21_is_less_or_equal(current, *remainder) &&
-           !(current.bits[2] & 0x80000000)) { // !переполнение
-      s21_shift_left(&current); // умножение на 2
+           !(current.bits[2] & 0x80000000)) {  // !переполнение
+      s21_shift_left(&current);                // умножение на 2
       s21_shift_left(&multiple);
     }
 
-    s21_shift_right(&current); // откат назад на 1 шаг
+    s21_shift_right(&current);  // откат назад на 1 шаг
     s21_shift_right(&multiple);
 
     s21_add(*quotient, multiple, quotient);
     s21_sub(*remainder, current, remainder);
 
-    if (s21_is_less(*remainder, divisor)) { // остаток < делителя
+    if (s21_is_less(*remainder, divisor)) {  // остаток < делителя
       loop = 0;
     } else {
-      s21_copy(divisor, &current); // сброс рабочих переменных
+      s21_copy(divisor, &current);  // сброс рабочих переменных
       multiple.bits[0] = 1;
     }
   }
