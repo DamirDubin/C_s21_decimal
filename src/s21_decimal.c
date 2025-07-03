@@ -126,7 +126,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       status = result_sign ? S21_ERROR_SMALL : S21_ERROR_BIG;
     }
   } else {  // разные знаки значит вычитаем
-    if (s21_mantissa_less(value_1, value_2)) {
+    if (s21_mantissa_less(value_1, value_2)) {  // меняем местами
       s21_decimal tmp = value_1;
       value_1 = value_2;
       value_2 = tmp;

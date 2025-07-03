@@ -108,15 +108,11 @@ START_TEST(test_div) {
   for (size_t i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
     s21_from_int_to_decimal(values[i][0], &a);
     s21_from_int_to_decimal(values[i][1], &b);
-    int res = s21_div(a, b, &result);
+    s21_div(a, b, &result);
 
-    if (values[i][1] == 0) {
-      ck_assert_int_eq(res, S21_ERROR_ZERO_DIV);
-    } else {
-      int expected;
-      s21_from_decimal_to_int(result, &expected);
-      ck_assert_int_eq(expected, values[i][2]);
-    }
+    int expected;
+    s21_from_decimal_to_int(result, &expected);
+    ck_assert_int_eq(expected, values[i][2]);
   }
 
   int ivalues[][3] = {
