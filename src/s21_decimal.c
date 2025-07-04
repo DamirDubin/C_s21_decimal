@@ -139,8 +139,8 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
     for (int i = 0; i < 3; i++) {  // вычитаем из большего меньшее
       unsigned long long ua = (unsigned int)value_1.bits[i];
       unsigned long long ub = (unsigned int)value_2.bits[i];
-      unsigned long long diff = ua - ub - borrow;
-      borrow = (diff > ua) ? 1 : 0;
+      unsigned long long diff = ua - ub - borrow;  // вычитаем заем
+      borrow = (diff > ua) ? 1 : 0;  // занимаем 1 из старшего разряда
       result->bits[i] = (unsigned int)diff;
     }
     if (s21_is_zero(result)) result_sign = 0;
@@ -168,22 +168,24 @@ void s21_integer_division(s21_decimal dividend, s21_decimal divisor,
   int loop = 1;
 
   while (loop) {
-    while (s21_is_less_or_equal(current, *remainder) &&
-           !(current.bits[2] & 0x80000000)) {  // !переполнение
-      s21_shift_left(&current);                // умножение на 2
-      s21_shift_left(&multiple);
+    while (s21_is_less_or_equal(current,
+                                *remainder) &&  // current <= remainder
+           !(current.bits[2] & 0x80000000)) {  // и нет переполнения
+      s21_shift_left(&current);   // умножаем current на 2
+      s21_shift_left(&multiple);  // умножаем multiple на 2
     }
 
-    s21_shift_right(&current);  // откат назад на 1 шаг
+    s21_shift_right(&current);
     s21_shift_right(&multiple);
 
-    s21_add(*quotient, multiple, quotient);
     s21_sub(*remainder, current, remainder);
+    s21_add(*quotient, multiple, quotient);
 
     if (s21_is_less(*remainder, divisor)) {  // остаток < делителя
       loop = 0;
     } else {
       s21_copy(divisor, &current);  // сброс рабочих переменных
+      s21_init_decimal(&multiple);
       multiple.bits[0] = 1;
     }
   }
