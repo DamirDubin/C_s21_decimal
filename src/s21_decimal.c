@@ -17,23 +17,21 @@ int s21_get_bit(s21_decimal dec, int bit) {
 int s21_shift_left(s21_decimal *dec) {
   int carry = 0;
   for (int i = 0; i < 3; i++) {  // только мантисса (0-2)
-    unsigned long long value = (unsigned int)dec->bits[i];
-    value = (value << 1) | carry;  // сдвиг + перенос
-    carry = value >> 32;
-    dec->bits[i] =
-        (int)(value & 0b11111111111111111111111111111111);  // сохраняем 32 бита
+    unsigned int value = (unsigned int)dec->bits[i];
+    unsigned long long extended = (unsigned long long)value << 1 | carry;
+    dec->bits[i] = (int)(extended & 0xFFFFFFFF);
+    carry = extended >> 32;
   }
-  return carry;  // 1 если переполнение (остался перенос после сдвига старшего
-                 // слова)
+  return carry;
 }
 
 int s21_shift_right(s21_decimal *dec) {
   unsigned int carry = 0;
   for (int i = 2; i >= 0; i--) {
-    unsigned int current = (unsigned int)dec->bits[i];
-    unsigned int new_carry = (current & 1) << 31;
-    dec->bits[i] = (current >> 1) | carry;
-    carry = new_carry;
+    unsigned int value = (unsigned int)dec->bits[i];
+    unsigned int new_value = (value >> 1) | carry;
+    carry = (value & 1) ? 0x80000000 : 0;
+    dec->bits[i] = (int)new_value;
   }
   return carry ? 1 : 0;
 }
@@ -196,10 +194,8 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   s21_init_decimal(result);
   if (s21_is_zero(&value_1) || s21_is_zero(&value_2)) return status;
 
-  int sign1 = s21_get_sign(&value_1);
-  int sign2 = s21_get_sign(&value_2);
-  int exp1 = s21_get_exp(&value_1);
-  int exp2 = s21_get_exp(&value_2);
+  int sign1 = s21_get_sign(&value_1), sign2 = s21_get_sign(&value_2);
+  int exp1 = s21_get_exp(&value_1), exp2 = s21_get_exp(&value_2);
   int result_sign = sign1 ^ sign2;
   int result_exp = exp1 + exp2;
 
@@ -211,30 +207,22 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       s21_decimal current = shifted;
       for (int j = 0; j < i; j++) {
         if (s21_shift_left(&current)) {
-          status = result_sign ? S21_ERROR_SMALL : S21_ERROR_BIG;
-          break;
+          status = S21_ERROR_BIG;
         }
       }
-      if (status == S21_OK)
-        status = s21_add(current, temp, &temp);  // добавляем к результату
+      s21_add(current, temp, &temp);  // добавляем к результату
     }
   }
 
-  while (status == S21_OK && (result_exp > S21_MAX_EXP || temp.bits[2] ||
-                              temp.bits[1])) {  // корректируем экспо
-    if (result_exp <= 0) {
-      status = result_sign ? S21_ERROR_SMALL : S21_ERROR_BIG;
-    } else {  // деление на 10 при переполнении
-      s21_div_by_10(&temp);
-      result_exp--;
-    }
+  while (status == S21_OK && result_exp > S21_MAX_EXP) {  // корректируем экспо
+    s21_div_by_10(&temp);
+    result_exp--;
   }
 
-  if (status == S21_OK) {
-    *result = temp;
-    s21_set_sign(result, result_sign);
-    s21_set_exp(result, result_exp);
-  }
+  *result = temp;
+  s21_set_sign(result, result_sign);
+  s21_set_exp(result, result_exp);
+
   return status;
 }
 
@@ -367,21 +355,14 @@ int s21_from_int_to_decimal(int src, s21_decimal *dst) {
 
 int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   s21_init_decimal(dst);
-  if (src == 0.0f) return S21_OK;
-
   float_parser parser;
   parser.f = src;
-
-  if (parser.parts.exponent == 0xFF) {  // проверки особых значений
-    return S21_ERROR_CONV;
-  }
-
-  int sign = parser.parts.sign;
   double abs_src = fabs(src);
 
-  if (abs_src > MAX_DECIMAL || abs_src < 1e-28) {
+  if (src == 0.0f) return S21_OK;
+  if ((abs_src < 1e-28f && src != 0) || (abs_src > MAX_DECIMAL) ||
+      (parser.parts.exponent == 0xFF))
     return S21_ERROR_CONV;
-  }
 
   int exp = 0;
   double temp = abs_src;
@@ -406,7 +387,7 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   }
 
   s21_set_exp(&temp_dec, exp);
-  s21_set_sign(&temp_dec, sign);
+  s21_set_sign(&temp_dec, parser.parts.sign);
   *dst = temp_dec;
 
   return S21_OK;
