@@ -19,7 +19,7 @@ int s21_shift_left(s21_decimal *dec) {
   for (int i = 0; i < 3; i++) {  // только мантисса (0-2)
     unsigned int value = (unsigned int)dec->bits[i];
     unsigned long long extended = (unsigned long long)value << 1 | carry;
-    dec->bits[i] = (int)(extended & 0xFFFFFFFF);
+    dec->bits[i] = (int)(extended & (unsigned int)(pow(2, 32) - 1));
     carry = extended >> 32;
   }
   return carry;
