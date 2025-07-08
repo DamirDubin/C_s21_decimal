@@ -24,8 +24,8 @@ typedef union {
 #define S21_ERROR_ZERO_DIV 3
 #define S21_ERROR_CONV 1
 
-#define S21_SIGN_MASK (1 << 31)   // 0x80000000
-#define S21_EXP_MASK (255 << 16)  // 0x00FF0000
+#define S21_SIGN_MASK (1U << 31)   // 0x80000000
+#define S21_EXP_MASK (255U << 16)  // 0x00FF0000
 #define S21_EXP_SHIFT 16
 #define S21_MIN_EXP 0
 #define S21_MAX_EXP 28
