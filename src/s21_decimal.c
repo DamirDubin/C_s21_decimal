@@ -19,7 +19,7 @@ int s21_shift_left(s21_decimal *dec) {
   for (int i = 0; i < 3; i++) {  // только мантисса (0-2)
     unsigned int value = (unsigned int)dec->bits[i];
     unsigned long long extended = (unsigned long long)value << 1 | carry;
-    dec->bits[i] = (int)(extended & (unsigned int)(pow(2, 32) - 1));
+    dec->bits[i] = (int)(extended & 0b11111111111111111111111111111111);
     carry = extended >> 32;
   }
   return carry;
@@ -30,7 +30,7 @@ int s21_shift_right(s21_decimal *dec) {
   for (int i = 2; i >= 0; i--) {
     unsigned int value = (unsigned int)dec->bits[i];
     unsigned int new_value = (value >> 1) | carry;
-    carry = (value & 1) ? 0x80000000 : 0;
+    carry = (value & 1) ? 0b10000000000000000000000000000000 : 0;
     dec->bits[i] = (int)new_value;
   }
   return carry ? 1 : 0;
@@ -50,7 +50,10 @@ int s21_mul_by_10(s21_decimal *value) {
   for (int i = 0; i < 3; i++) {  // для каждого слова мантиссы
     unsigned long long digit = (unsigned int)value->bits[i];
     digit = digit * 10 + carry;
-    value->bits[i] = (unsigned int)(digit & 0xFFFFFFFF);  // сохраняем 32 бита
+    value->bits[i] =
+        (unsigned int)(digit &
+                       0b11111111111111111111111111111111);  // сохраняем
+                                                             // 32 бита
     carry = digit >> 32;
   }
   return carry ? 1 : 0;  // 1 если переполнение
@@ -115,7 +118,8 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       unsigned long long ua = (unsigned int)value_1.bits[i];
       unsigned long long ub = (unsigned int)value_2.bits[i];
       unsigned long long sum = ua + ub + carry;
-      result->bits[i] = (unsigned int)(sum & 0xFFFFFFFF);
+      result->bits[i] =
+          (unsigned int)(sum & 0b11111111111111111111111111111111);
       carry = sum >> 32;
     }
     result_sign = sign1;
@@ -168,7 +172,8 @@ void s21_integer_division(s21_decimal dividend, s21_decimal divisor,
   while (loop) {
     while (s21_is_less_or_equal(current,
                                 *remainder) &&  // current <= remainder
-           !(current.bits[2] & 0x80000000)) {  // и нет переполнения
+           !(current.bits[2] &
+             0b10000000000000000000000000000000)) {  // и нет переполнения
       s21_shift_left(&current);   // умножаем current на 2
       s21_shift_left(&multiple);  // умножаем multiple на 2
     }
@@ -361,7 +366,7 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
 
   if (src == 0.0f) return S21_OK;
   if ((abs_src < 1e-28f && src != 0) || (abs_src > MAX_DECIMAL) ||
-      (parser.parts.exponent == 0xFF))
+      (parser.parts.exponent == 0b00000000000000000000000011111111))
     return S21_ERROR_CONV;
 
   int exp = 0;
@@ -381,9 +386,9 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   uint64_t int_value = (uint64_t)round(temp);
 
   s21_decimal temp_dec = {0};
-  temp_dec.bits[0] = int_value & 0xFFFFFFFF;
-  if (int_value > 0xFFFFFFFF) {
-    temp_dec.bits[1] = (int_value >> 32) & 0xFFFFFFFF;
+  temp_dec.bits[0] = int_value & 0b11111111111111111111111111111111;
+  if (int_value > 0b11111111111111111111111111111111) {
+    temp_dec.bits[1] = (int_value >> 32) & 0b11111111111111111111111111111111;
   }
 
   s21_set_exp(&temp_dec, exp);
