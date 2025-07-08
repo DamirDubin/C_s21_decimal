@@ -5,7 +5,7 @@ void s21_init_decimal(s21_decimal *dec) {
 }
 
 void s21_copy(s21_decimal src, s21_decimal *dst) {
-  for (int i = 0; i < 4; i++) dst->bits[i] = src.bits[i];
+  memcpy(dst->bits, src.bits, sizeof(src.bits));
 }
 
 int s21_get_bit(s21_decimal dec, int bit) {
@@ -17,20 +17,20 @@ int s21_get_bit(s21_decimal dec, int bit) {
 int s21_shift_left(s21_decimal *dec) {
   int carry = 0;
   for (int i = 0; i < 3; i++) {  // только мантисса (0-2)
-    unsigned int value = (unsigned int)dec->bits[i];
-    unsigned long long extended = (unsigned long long)value << 1 | carry;
-    dec->bits[i] = (int)(extended & 0b11111111111111111111111111111111);
+    uint32_t value = (uint32_t)dec->bits[i];
+    uint64_t extended = (uint64_t)value << 1 | carry;
+    dec->bits[i] = (int)(extended & UINT32_MAX);
     carry = extended >> 32;
   }
   return carry;
 }
 
 int s21_shift_right(s21_decimal *dec) {
-  unsigned int carry = 0;
+  uint32_t carry = 0;
   for (int i = 2; i >= 0; i--) {
-    unsigned int value = (unsigned int)dec->bits[i];
-    unsigned int new_value = (value >> 1) | carry;
-    carry = (value & 1) ? 0b10000000000000000000000000000000 : 0;
+    uint32_t value = (uint32_t)dec->bits[i];
+    uint32_t new_value = (value >> 1) | carry;
+    carry = (value & 1) ? S21_SIGN_MASK : 0;
     dec->bits[i] = (int)new_value;
   }
   return carry ? 1 : 0;
@@ -46,27 +46,24 @@ int s21_mantissa_less(s21_decimal a, s21_decimal b) {
 }
 
 int s21_mul_by_10(s21_decimal *value) {
-  unsigned long long carry = 0;
+  uint64_t carry = 0;
   for (int i = 0; i < 3; i++) {  // для каждого слова мантиссы
-    unsigned long long digit = (unsigned int)value->bits[i];
+    uint64_t digit = (uint32_t)value->bits[i];
     digit = digit * 10 + carry;
-    value->bits[i] =
-        (unsigned int)(digit &
-                       0b11111111111111111111111111111111);  // сохраняем
-                                                             // 32 бита
+    value->bits[i] = (uint32_t)(digit & UINT32_MAX);  // сохраняем
+                                                      // 32 бита
     carry = digit >> 32;
   }
   return carry ? 1 : 0;  // 1 если переполнение
 }
 
 int s21_div_by_10(s21_decimal *value) {
-  unsigned long long remainder = 0;
+  uint64_t remainder = 0;
   for (int i = 2; i >= 0; i--) {
-    unsigned long long digit =
-        (remainder << 32) |
-        (unsigned int)value->bits[i];  // формируем 64-бит значение
-    value->bits[i] = (unsigned int)(digit / 10);  // целая часть
-    remainder = digit % 10;                       // остаток
+    uint64_t digit = (remainder << 32) |
+                     (uint32_t)value->bits[i];  // формируем 64-бит значение
+    value->bits[i] = (uint32_t)(digit / 10);  // целая часть
+    remainder = digit % 10;                   // остаток
   }
   return (int)remainder;  // возвращаем остаток от деления
 }
@@ -113,13 +110,12 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   int result_sign = 0;
 
   if (sign1 == sign2) {  // одинаковые знаки значит плюсуем
-    unsigned long long carry = 0;
+    uint64_t carry = 0;
     for (int i = 0; i < 3; i++) {  // сложение мантисс с переносом
-      unsigned long long ua = (unsigned int)value_1.bits[i];
-      unsigned long long ub = (unsigned int)value_2.bits[i];
-      unsigned long long sum = ua + ub + carry;
-      result->bits[i] =
-          (unsigned int)(sum & 0b11111111111111111111111111111111);
+      uint64_t ua = (uint32_t)value_1.bits[i];
+      uint64_t ub = (uint32_t)value_2.bits[i];
+      uint64_t sum = ua + ub + carry;
+      result->bits[i] = (uint32_t)(sum & UINT32_MAX);
       carry = sum >> 32;
     }
     result_sign = sign1;
@@ -137,13 +133,13 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       result_sign = sign1;
     }
 
-    unsigned long long borrow = 0;
+    uint64_t borrow = 0;
     for (int i = 0; i < 3; i++) {  // вычитаем из большего меньшее
-      unsigned long long ua = (unsigned int)value_1.bits[i];
-      unsigned long long ub = (unsigned int)value_2.bits[i];
-      unsigned long long diff = ua - ub - borrow;  // вычитаем заем
+      uint64_t ua = (uint32_t)value_1.bits[i];
+      uint64_t ub = (uint32_t)value_2.bits[i];
+      uint64_t diff = ua - ub - borrow;  // вычитаем заем
       borrow = (diff > ua) ? 1 : 0;  // занимаем 1 из старшего разряда
-      result->bits[i] = (unsigned int)diff;
+      result->bits[i] = (uint32_t)diff;
     }
     if (s21_is_zero(result)) result_sign = 0;
   }
@@ -172,8 +168,7 @@ void s21_integer_division(s21_decimal dividend, s21_decimal divisor,
   while (loop) {
     while (s21_is_less_or_equal(current,
                                 *remainder) &&  // current <= remainder
-           !(current.bits[2] &
-             0b10000000000000000000000000000000)) {  // и нет переполнения
+           !(current.bits[2] & S21_SIGN_MASK)) {  // и нет переполнения
       s21_shift_left(&current);   // умножаем current на 2
       s21_shift_left(&multiple);  // умножаем multiple на 2
     }
@@ -365,15 +360,15 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   double abs_src = fabs(src);
 
   if (src == 0.0f) return S21_OK;
-  if ((abs_src < 1e-28f && src != 0) || (abs_src > MAX_DECIMAL) ||
-      (parser.parts.exponent == 0b00000000000000000000000011111111))
+  if ((abs_src < 1e-28f && src != 0) || (abs_src > S21_MAX_DECIMAL) ||
+      (parser.parts.exponent == 0xFF))
     return S21_ERROR_CONV;
 
   int exp = 0;
   double temp = abs_src;
 
   while (exp < 28 && temp < 1e7 &&
-         temp * 10.0 <= (double)MAX_DECIMAL) {  // нормализация
+         temp * 10.0 <= (double)S21_MAX_DECIMAL) {  // нормализация
     temp *= 10.0;
     exp++;
   }
@@ -386,9 +381,9 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
   uint64_t int_value = (uint64_t)round(temp);
 
   s21_decimal temp_dec = {0};
-  temp_dec.bits[0] = int_value & 0b11111111111111111111111111111111;
-  if (int_value > 0b11111111111111111111111111111111) {
-    temp_dec.bits[1] = (int_value >> 32) & 0b11111111111111111111111111111111;
+  temp_dec.bits[0] = int_value & UINT32_MAX;
+  if (int_value > UINT32_MAX) {
+    temp_dec.bits[1] = (int_value >> 32) & UINT32_MAX;
   }
 
   s21_set_exp(&temp_dec, exp);

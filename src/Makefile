@@ -1,17 +1,16 @@
 UNAME_S := $(shell uname -s)
+TEST_LIBS = -lm -lpthread
 
 ifeq ($(UNAME_S), Linux)
-    CFLAGS += -D__linux__ -Wall -Werror -Wextra -std=c11
-    TEST_LIBS = -lcheck_pic -lm -lpthread -lrt -lsubunit
+    TEST_LIBS += -lcheck_pic -lrt -lsubunit
 endif
 
 ifeq ($(UNAME_S), Darwin)
-    CFLAGS += -D__APPLE__ -Wall -Werror -Wextra -std=c11
-    TEST_LIBS = -lcheck -lm -lpthread
+    TEST_LIBS += -lcheck
 endif
 
-
 CC = gcc
+CFLAGS = -Wall -Werror -Wextra -std=c11 -pedantic
 LINK_FLAGS = --coverage
 SRC = s21_decimal.c
 OBJ = $(SRC:.c=.o)
@@ -26,11 +25,9 @@ all: s21_decimal.a test
 
 s21_decimal.a: $(OBJ)
 	ar rcs $@ $^
-	ranlib $@
 
 s21_decimal_cov.a: $(OBJ_COV)
 	ar rcs $@ $^
-	ranlib $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -199,7 +199,8 @@ START_TEST(test_converters) {
                      123.456f, -789.012f, 1e-7f, 1e7f};
 
   for (size_t i = 0; i < sizeof(fvalues) / sizeof(fvalues[0]); i++) {
-    if (fabsf(fvalues[i]) < 1e-28f || fabsf(fvalues[i]) > MAX_DECIMAL) continue;
+    if (fabsf(fvalues[i]) < 1e-28f || fabsf(fvalues[i]) > S21_MAX_DECIMAL)
+      continue;
 
     s21_decimal d;
     int conv_res = s21_from_float_to_decimal(fvalues[i], &d);
