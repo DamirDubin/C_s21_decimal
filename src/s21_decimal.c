@@ -75,21 +75,17 @@ void s21_normalize_exponents(s21_decimal *a, s21_decimal *b) {
   while (exp_a != exp_b) {
     if (exp_a < exp_b) {            // для а
       if (s21_mul_by_10(a) == 0) {  // увеличиваем а
-        exp_a++;
-        s21_set_exp(a, exp_a);
+        s21_set_exp(a, ++exp_a);
       } else {  // если переполнение уменьшаем б
         s21_div_by_10(b);
-        exp_b--;
-        s21_set_exp(b, exp_b);
+        s21_set_exp(b, --exp_b);
       }
     } else {  // для б
       if (s21_mul_by_10(b) == 0) {
-        exp_b++;
-        s21_set_exp(b, exp_b);
+        s21_set_exp(b, ++exp_b);
       } else {
         s21_div_by_10(a);
-        exp_a--;
-        s21_set_exp(a, exp_a);
+        s21_set_exp(a, --exp_a);
       }
     }
   }
@@ -373,11 +369,6 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
     exp++;
   }
 
-  while (fmod(temp, 10.0) == 0.0 && exp > 0) {
-    temp /= 10.0;
-    exp--;
-  }
-
   uint64_t int_value = (uint64_t)round(temp);
 
   s21_decimal temp_dec = {0};
@@ -463,7 +454,7 @@ int s21_round(s21_decimal value, s21_decimal *result) {
 int s21_truncate(s21_decimal value, s21_decimal *result) {
   int exp = s21_get_exp(&value);
   while (exp-- > 0) {
-    s21_div_by_10(&value);  // деление на 10^эксп
+    s21_div_by_10(&value);  // деление на 10
   }
   *result = value;
   s21_set_exp(result, 0);  // сброс экспо
