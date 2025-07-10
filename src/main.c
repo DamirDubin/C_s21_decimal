@@ -150,7 +150,7 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
 
 void binary_print(s21_decimal x, char *buf) {
   int pos = 0;
-  for (int i = 2; i >= 0; i--) {
+  for (int i = 3; i >= 0; i--) {
     for (int j = 31; j >= 0; j--) {
       buf[pos++] = (x.bits[i] & (1U << j)) ? '1' : '0';
     }
@@ -172,6 +172,7 @@ int main() {
   char res[129];
   s21_decimal a = {5, 0, 0, 0};
   s21_mul_by_10(&a);
+  s21_set_sign(&a, 1);
   binary_print(a, res);
   printf("%s\n", res);
 }

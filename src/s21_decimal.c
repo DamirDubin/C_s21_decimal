@@ -341,11 +341,14 @@ int s21_is_not_equal(s21_decimal a, s21_decimal b) {
 
 int s21_from_int_to_decimal(int src, s21_decimal *dst) {
   s21_init_decimal(dst);
+
   if (src < 0) {
     s21_set_sign(dst, 1);
-    src = -src;
+    src *= -1;
   }
-  dst->bits[0] = src;  // младшее слово
+
+  dst->bits[0] = src;
+
   return S21_OK;
 }
 
@@ -357,7 +360,7 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
 
   if (src == 0.0f) return S21_OK;
   if ((abs_src < 1e-28f && src != 0) || (abs_src > S21_MAX_DECIMAL) ||
-      (parser.parts.exponent == 0xFF))
+      (parser.parts.exponent == 255U))
     return S21_ERROR_CONV;
 
   int exp = 0;
@@ -386,27 +389,30 @@ int s21_from_float_to_decimal(float src, s21_decimal *dst) {
 
 int s21_from_decimal_to_int(s21_decimal src, int *dst) {
   s21_truncate(src, &src);
+
   *dst = src.bits[0];
-  if (s21_get_sign(&src)) *dst = -*dst;
+  if (s21_get_sign(&src)) *dst *= -1;
+
   return S21_OK;
 }
 
 int s21_from_decimal_to_float(s21_decimal src, float *dst) {
   double result = 0.0;
+
   for (int i = 0; i < 96; i++) {
     if (s21_get_bit(src, i)) {
-      result += pow(2.0, i);  // суммирование битов
+      result += pow(2, i);  // суммирование битов
     }
   }
 
   int exp = s21_get_exp(&src);
   if (exp > 0) {
-    result /= pow(10.0, exp);  // учет экспо
+    result /= pow(10, exp);  // учет экспо
   }
 
   *dst = (float)result;
   if (s21_get_sign(&src)) {
-    *dst = -*dst;
+    *dst *= -1;
   }
 
   return S21_OK;
