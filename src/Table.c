@@ -1,0 +1,113 @@
++ |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    0.000000 1.000000 - 1.000000 inf - inf - nan 1.000000 |
+    1.000000 2.000000 0.000000 inf - inf - nan - 1.000000 |
+    -1.000000 0.000000 - 2.000000 inf - inf - nan inf |
+    inf inf inf inf - nan - nan - inf |
+    -inf - inf - inf - nan - inf - nan - nan |
+    -nan - nan - nan - nan - nan - nan
+
+        -
+    |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    0.000000 - 1.000000 1.000000 - inf inf - nan 1.000000 |
+    1.000000 0.000000 2.000000 - inf inf - nan - 1.000000 |
+    -1.000000 - 2.000000 0.000000 - inf inf - nan inf |
+    inf inf inf - nan inf - nan - inf |
+    -inf - inf - inf - inf - nan - nan - nan |
+    -nan - nan - nan - nan - nan -
+        nan
+
+            * |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    0.000000 0.000000 - 0.000000 - nan - nan - nan 1.000000 |
+    0.000000 1.000000 - 1.000000 inf - inf - nan - 1.000000 |
+    -0.000000 - 1.000000 1.000000 - inf inf - nan inf |
+    -nan inf - inf inf - inf - nan - inf |
+    -nan - inf inf - inf inf - nan - nan |
+    -nan - nan - nan - nan - nan -
+        nan
+
+            /
+    |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    -nan 0.000000 - 0.000000 0.000000 - 0.000000 - nan 1.000000 |
+    inf 1.000000 - 1.000000 0.000000 - 0.000000 - nan - 1.000000 |
+    -inf - 1.000000 1.000000 - 0.000000 0.000000 - nan inf |
+    inf inf - inf - nan - nan - nan - inf |
+    -inf - inf inf - nan - nan - nan - nan |
+    -nan - nan - nan - nan - nan -
+        nan
+
+            %
+    |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    -nan 0.000000 0.000000 0.000000 0.000000 - nan 1.000000 |
+    -nan 0.000000 0.000000 1.000000 1.000000 - nan - 1.000000 |
+    -nan - 0.000000 - 0.000000 - 1.000000 - 1.000000 - nan inf |
+    -nan - nan - nan - nan - nan - nan - inf |
+    -nan - nan - nan - nan - nan - nan - nan |
+    -nan - nan - nan - nan - nan - nan
+
+        ==
+    |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    TRUE FALSE FALSE FALSE FALSE FALSE 1.000000 |
+    FALSE TRUE FALSE FALSE FALSE FALSE - 1.000000 |
+    FALSE FALSE TRUE FALSE FALSE FALSE inf |
+    FALSE FALSE FALSE TRUE FALSE FALSE - inf |
+    FALSE FALSE FALSE FALSE TRUE FALSE - nan |
+    FALSE FALSE FALSE FALSE FALSE FALSE
+
+        != |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    FALSE TRUE TRUE TRUE TRUE TRUE 1.000000 |
+    TRUE FALSE TRUE TRUE TRUE TRUE - 1.000000 |
+    TRUE TRUE FALSE TRUE TRUE TRUE inf | TRUE TRUE TRUE FALSE TRUE TRUE - inf |
+    TRUE TRUE TRUE TRUE FALSE TRUE - nan |
+    TRUE TRUE TRUE TRUE TRUE TRUE
+
+    <|
+     0.000000 1.000000 - 1.000000 inf - inf -
+         nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+     FALSE TRUE FALSE TRUE FALSE FALSE 1.000000 |
+     FALSE FALSE FALSE TRUE FALSE FALSE - 1.000000 |
+     TRUE TRUE FALSE TRUE FALSE FALSE inf |
+     FALSE FALSE FALSE FALSE FALSE FALSE - inf |
+     TRUE TRUE TRUE TRUE FALSE FALSE - nan |
+     FALSE FALSE FALSE FALSE FALSE FALSE
+
+         <= |
+     0.000000 1.000000 - 1.000000 inf - inf -
+         nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+     TRUE TRUE FALSE TRUE FALSE FALSE 1.000000 |
+     FALSE TRUE FALSE TRUE FALSE FALSE - 1.000000 |
+     TRUE TRUE TRUE TRUE FALSE FALSE inf |
+     FALSE FALSE FALSE TRUE FALSE FALSE - inf |
+     TRUE TRUE TRUE TRUE TRUE FALSE - nan | FALSE FALSE FALSE FALSE FALSE FALSE
+
+     > |
+    0.000000 1.000000 - 1.000000 inf - inf -
+        nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    FALSE FALSE TRUE FALSE TRUE FALSE 1.000000 |
+    TRUE FALSE TRUE FALSE TRUE FALSE - 1.000000 |
+    FALSE FALSE FALSE FALSE TRUE FALSE inf |
+    TRUE TRUE TRUE FALSE TRUE FALSE - inf |
+    FALSE FALSE FALSE FALSE FALSE FALSE - nan |
+    FALSE FALSE FALSE FALSE FALSE FALSE
+
+        >=
+    | 0.000000 1.000000 - 1.000000 inf - inf - nan-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -0.000000 |
+    TRUE FALSE TRUE FALSE TRUE FALSE 1.000000 |
+    TRUE TRUE TRUE FALSE TRUE FALSE - 1.000000 |
+    FALSE FALSE TRUE FALSE TRUE FALSE inf |
+    TRUE TRUE TRUE TRUE TRUE FALSE - inf |
+    FALSE FALSE FALSE FALSE TRUE FALSE - nan |
+    FALSE FALSE FALSE FALSE FALSE FALSE

@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "cstdlib": "c",
+        "__locale": "c",
+        "chrono": "c",
+        "functional": "c"
+    }
+}

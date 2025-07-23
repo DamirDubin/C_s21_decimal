@@ -1,0 +1,71 @@
+{
+"version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-debug",
+      "type": "shell",
+      "command": "make",
+      "args": ["debug_test"],
+      "options": {
+      "cwd": "${workspaceFolder}/src"
+      }
+    }
+  ]
+}
+
+// {
+//   "version": "2.0.0",
+//   "tasks": [
+//     {
+//       "label": "build-debug",
+//       "type": "cppbuild",
+//       "command": "gcc",
+//       "args": [
+//         "-g",
+//         "-O0",
+//         "-DDEBUG_MODE",
+//         "-Wall",
+//         "-Wextra",
+//         "-Werror",
+//         "-std=c11",
+//         "-o",
+//         "${workspaceFolder}/src/test",
+//         "${workspaceFolder}/src/s21_decimal.c",
+//         "${workspaceFolder}/src/test.c",
+//         "-lcheck",
+//         "-lm",
+//         "-lpthread"
+//         // "-lcheck",
+//         // "-D__APPLE__"
+//       ],
+//       "options": {
+//         "cwd": "${workspaceFolder}/src"
+//       },
+//       "group": {
+//         "kind": "build",
+//         "isDefault": true
+//       },
+//       "problemMatcher": ["$gcc"],
+//       "detail": "Сборка отладочной версии с полной отладочной информацией"
+//     }
+//   ]
+// }
+
+// // {
+// //   "version": "2.0.0",
+// //   "tasks": [
+// //     {
+// //       "label": "build-debug",
+// //       "type": "shell",
+// //       "command": "make",
+// //       "args": ["test"],
+// //       "options": {
+// //         "cwd": "${workspaceFolder}/src"
+// //       },
+// //       "group": {
+// //         "kind": "build",
+// //         "isDefault": true
+// //       }
+// //     }
+// //   ]
+// // }
