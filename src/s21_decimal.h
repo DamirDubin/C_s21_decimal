@@ -3,6 +3,10 @@
 
 #include <math.h>    // fabs() pow()
 #include <stdint.h>  // uint32_t
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h> 
+#include <limits.h>
 
 #define S21_OK 0
 #define S21_ERROR 1
@@ -61,9 +65,10 @@ int s21_reduce_and_round(s21_big_decimal* big, int* scale);
 // int s21_div_10(s21_decimal* value, s21_decimal* remainder);
 int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result);
 void s21_mul_ten(s21_big_decimal* t);
-int s21_normalize_big_decimals(s21_big_decimal* a, s21_big_decimal* b,
-                               int* scale_a, int* scale_b);
+void s21_normalize_big_decimals(s21_big_decimal* a, s21_big_decimal* b, int* scale_a, int* scale_b);
 int last_digit(s21_big_decimal* big, int z);
+int s21_shift_left_2(s21_decimal *dec);
+int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
 
 // Азовы функции
 int s21_get_bit(s21_decimal dec, int bit);

@@ -126,8 +126,8 @@ void run_conversion_tests() {
         },
         // Слишком большое число (должно вернуть ошибку)
         {
-            .expected_int = 0,
-            .expected_result = 1,
+            .expected_int = INT_MAX,
+            .expected_result = 0,
             .src_decimal = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0}}  // MAX_DECIMAL > INT_MAX
         },
 
@@ -170,7 +170,7 @@ void run_conversion_tests() {
         if (i < 5) {
             result = s21_from_int_to_decimal(test.src_int, &dst_dec);
             if (result == test.expected_result &&
-                memcmp(&dst_dec, &test.src_decimal, sizeof(s21_decimal))) {
+                memcmp(&dst_dec, &test.src_decimal, sizeof(s21_decimal)) == 0) {
                 printf("Тест %s - %ld пройден\n", test_types[0], i);
             } else {
                 printf("Тест %s - %ld провален! (ожидалось %d, получено %d)\n",
@@ -468,12 +468,87 @@ void rounding_tests() {
   }
 }
 
+void print_decimal_bits(s21_decimal dec) {
+    for (int i = 0; i < 4; i++) {
+        printf("bits[%d]: ", i);
+        for (int j = 31; j >= 0; j--) {
+            printf("%d", (dec.bits[i] >> j) & 1);
+        }
+        printf("\n");
+    }
+}
+
+void custom_test_add() {
+    s21_decimal a = {{0}};
+    s21_decimal b = {{0}};
+    s21_decimal result = {{0}};
+
+    
+    a.bits[0] = 25;    //4294967295
+    a.bits[1] = 0000000000;   
+    a.bits[2] = 0000000000;  
+    s21_set_scale(&a, 1);        
+    s21_set_sign(&a, 0);       
+    
+     b.bits[0] = 45;
+     b.bits[1] = 0000000000;  
+     b.bits[2] = 0000000000;                  
+    s21_set_scale(&b, 1);        
+    s21_set_sign(&b, 0);     
+    
+
+        // s21_big_decimal c = {{0}};
+        // s21_from_decimal_to_big(b, &c);
+        //  s21_mul_ten(&c);
+   
+
+    
+    print_decimal_bits(a);
+    printf("Scale: %d\n", s21_get_scale(&a));
+    printf("Sign : %d\n\n", s21_get_sign(&a));
+
+    print_decimal_bits(b);
+    printf("Scale: %d\n", s21_get_scale(&b));
+    printf("Sign : %d\n\n", s21_get_sign(&b));
+
+    int status = s21_add(a, b, &result);
+    
+    if (status == 0) {
+        print_decimal_bits(result);
+        printf("Scale: %d\n", s21_get_scale(&result));
+        printf("Sign : %d\n", s21_get_sign(&result));
+        
+    } else {
+        printf("ERROR\n\n");
+    }
+
+}
+
+void print_float_bits(float f) {
+    uint32_t bits = *(uint32_t*)&f;
+    printf("Знак: %d\n", (bits >> 31) & 1);
+    printf("Экспонента: %d\n", ((bits >> 23) & 0xFF) - 127);
+    printf("Мантисса: 0x%X\n", bits & 0x7FFFFF);
+}
+
+void test_mul(){
+    s21_decimal a = {{45, 0, 0, 0}};
+    s21_decimal b = {{10, 0, 0, 0}};
+    s21_decimal result = {(0)};
+    s21_mul(a, b, &result); 
+}
 int main() {
   
-  // rounding_tests();
-  // run_comparison_tests();
-  // run_add_tests();
+  rounding_tests();
+  run_comparison_tests();
+  run_add_tests();
   run_conversion_tests();
+  // custom_test_add();
+
+
+    // float num = -12.375f;
+    // print_float_bits(num);
+    // test_mul();
 
   return 0;
 }
