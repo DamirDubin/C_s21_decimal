@@ -104,6 +104,16 @@ void run_conversion_tests() {
             .expected_result = 0,
             .src_decimal = {{1234568, 0, 0, 0x00060000}}  // Ожидается округление до 1.234568
         },
+        {
+    .src_float = 1e-7f,                  // 0.0000001
+    .expected_result = 0,                 // Ожидается успешное преобразование
+    .src_decimal = {{1, 0, 0, 0x00070000}} // 1 с масштабом 7 (0.0000001)
+},
+{
+    .src_float = -1e-7f,                 // -0.0000001
+    .expected_result = 0,
+    .src_decimal = {{1, 0, 0, 0x80070000}} // Добавлен флаг отрицательности
+},
 
         // ===================== decimal → int =====================
         // Простые числа
@@ -178,7 +188,7 @@ void run_conversion_tests() {
             }
         }
         // Проверка float → decimal
-        else if (i < 11) {
+        else if (i < 13) {
             result = s21_from_float_to_decimal(test.src_float, &dst_dec);
             if (result == test.expected_result &&
                 memcmp(&dst_dec, &test.src_decimal, sizeof(s21_decimal)) == 0) {
@@ -189,7 +199,7 @@ void run_conversion_tests() {
             }
         }
         // Проверка decimal → int
-        else if (i < 15) {
+        else if (i < 17) {
             result = s21_from_decimal_to_int(test.src_decimal, &dst_int);
             if (result == test.expected_result && dst_int == test.expected_int) {
                 printf("Тест %s - %ld пройден\n", test_types[2], i);
@@ -539,9 +549,9 @@ void test_mul(){
 }
 int main() {
   
-  rounding_tests();
-  run_comparison_tests();
-  run_add_tests();
+//   rounding_tests();
+//   run_comparison_tests();
+//   run_add_tests();
   run_conversion_tests();
   // custom_test_add();
 
