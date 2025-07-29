@@ -1,10 +1,24 @@
-#ifndef S21_DECIMAL_TYPES_H
-#define S21_DECIMAL_TYPES_H
+#ifndef S21_DECIMAL_H
+#define S21_DECIMAL_H
+
+#include <math.h>    // fabs() pow()
+#include <stdint.h>  // uint32_t
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h> 
+#include <limits.h>
 
 #define S21_OK 0
-#define ERROR 1
-#define S21_NULL ((void *)0)
-
+#define S21_ERROR 1
+//------------------------
+#define MAX_DECIMAL 79228162514264337593543950335.0
+#define S21_ERROR_CONV 1
+#define S21_ERROR_BIG 1
+#define S21_ERROR_SMALL 2
+#define S21_ERROR_ZERO_DIV 3
+//------------------------
+#define S21_ERROR_CALC 1
+#define S21_NULL ((void*)0)
 
 typedef struct {
   int bits[4];
@@ -14,6 +28,22 @@ typedef struct {
   unsigned int bits[8];
 } s21_big_decimal;
 
+typedef union {
+  float f;
+  struct {
+    uint32_t mantissa : 23;
+    uint32_t exponent : 8;
+    uint32_t sign : 1;
+  } parts;
+} float_parser;
+
+// Help functions
+void s21_init_decimal(s21_decimal* dec);
+int s21_div_by_10(s21_decimal* value);
+int s21_mul_by_10(s21_decimal* value);
+void s21_normalize_exponents(s21_decimal* a, s21_decimal* b);
+
+// База Талгата
 void s21_shift_left(s21_big_decimal* num, int shift_value);
 void s21_bitwise_addition(s21_big_decimal* value_1, s21_big_decimal* value_2, s21_big_decimal* result);
 void s21_big_set_bit(s21_big_decimal* value, int bit_number, int bit_value);
@@ -42,14 +72,27 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
 int s21_big_is_zero(s21_big_decimal* val);
 
 
-//Domir theme
-int s21_floor(s21_decimal value, s21_decimal *result);
-int s21_truncate(s21_decimal value, s21_decimal *result);
+// Азовы функции
+int s21_get_bit(s21_decimal dec, int bit);
+int s21_from_int_to_decimal(int src, s21_decimal* dst);
+int s21_from_float_to_decimal(float src, s21_decimal* dst);
+int s21_from_decimal_to_int(s21_decimal src, int* dst);
+int s21_from_decimal_to_float(s21_decimal src, float* dst);
 
-//Ивангелие от Yana
+// Ивангелие от Yana
 int s21_is_less(s21_decimal a, s21_decimal b);
 int s21_abs_compare(s21_decimal a, s21_decimal b);
 int s21_is_equal(s21_decimal, s21_decimal);
+int s21_is_zero(s21_decimal dec);
+int s21_is_less_or_equal(s21_decimal a, s21_decimal b);
+int s21_is_greater(s21_decimal a, s21_decimal b);
+int s21_is_not_equal(s21_decimal a, s21_decimal b);
+int s21_is_greater_or_equal(s21_decimal a, s21_decimal b);
 
+// Damir theme
+int s21_floor(s21_decimal value, s21_decimal* result);
+int s21_round(s21_decimal value, s21_decimal* result);
+int s21_truncate(s21_decimal value, s21_decimal* result);
+int s21_negate(s21_decimal value, s21_decimal* result);
 
-#endif  
+#endif

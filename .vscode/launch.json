@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug with CodeLLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/test",
+            "cwd": "${workspaceFolder}/src",
+            "preLaunchTask": "build-debug"
+        },
+        {
+            "name": "C/C++: gcc build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "build-debug"
+        }
+    ]
+}
