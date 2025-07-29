@@ -14,30 +14,24 @@ void print_decimal_bits(s21_decimal dec) {
     }
 }
 
+
 int main() {
     s21_decimal a = {{0}};
     s21_decimal b = {{0}};
     s21_decimal result = {{0}};
 
     
-    a.bits[0] = 25;    //4294967295
-    a.bits[1] = 0000000000;   
-    a.bits[2] = 0000000000;  
-    s21_set_scale(&a, 1);        
+    a.bits[0] = 1000000;    
+    a.bits[1] = 0;   
+    a.bits[2] = 0;  
+    s21_set_scale(&a, 0);        
     s21_set_sign(&a, 0);       
     
-     b.bits[0] = 45;
-     b.bits[1] = 0000000000;  
-     b.bits[2] = 0000000000;                  
-    s21_set_scale(&b, 1);        
+     b.bits[0] = 100;
+     b.bits[1] = 0;  
+     b.bits[2] = 0;                  
+    s21_set_scale(&b, 2);        
     s21_set_sign(&b, 0);     
-    
-
-        // s21_big_decimal c = {{0}};
-        // s21_from_decimal_to_big(b, &c);
-        //  s21_mul_ten(&c);
-   
-
     
     print_decimal_bits(a);
     printf("Scale: %d\n", s21_get_scale(&a));
@@ -47,7 +41,10 @@ int main() {
     printf("Scale: %d\n", s21_get_scale(&b));
     printf("Sign : %d\n\n", s21_get_sign(&b));
 
-    int status = s21_add(a, b, &result);
+    //int status = s21_add(a, b, &result);
+    //  int status = s21_sub(a, b, &result);
+    //  int status = s21_mul(a, b, &result);
+    int status = s21_div(a, b, &result);
     
     if (status == 0) {
         print_decimal_bits(result);
@@ -58,6 +55,5 @@ int main() {
         printf("ERROR\n\n");
     }
     return 0;
-
 }
 

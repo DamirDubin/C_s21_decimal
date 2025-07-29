@@ -1,7 +1,19 @@
+
+
 #include "s21_decimal.h"
 #include <stdio.h>
+
 void s21_shift_left(s21_big_decimal* num, int shift_value) {
-    if (shift_value >= 0 && shift_value < 32){
+    
+     while (shift_value >= 32) {
+        for (int i = 6; i > 0; --i) {
+            num->bits[i] = num->bits[i - 1];
+        }
+        num->bits[0] = 0;
+        shift_value -= 32;
+    }
+    
+    if (shift_value > 0){
     unsigned memory = 0;
     for (int i = 0; i < 7; ++i) {
         unsigned temp = num->bits[i];
@@ -105,18 +117,19 @@ int s21_find_oldest_positive_bit(s21_big_decimal* a){
   return 0;
 }
 
+
 void s21_div_big_10(s21_big_decimal* a, s21_big_decimal* result) {
     *result = (s21_big_decimal){{0}};
     s21_big_decimal ten = {{0b1010, 0, 0, 0, 0, 0, 0}}; 
-    s21_big_decimal remainder = *a;
+    s21_big_decimal a_copy = *a;
     s21_big_decimal one = {{1, 0, 0, 0, 0, 0, 0}};
     s21_big_decimal temp = {{0}};
 
-    int bits_number = s21_find_oldest_positive_bit(&remainder);
+    int bits_number = s21_find_oldest_positive_bit(&a_copy);
 
     while (bits_number >= 0) {
         s21_shift_left(&temp, 1);
-        if((remainder.bits[bits_number / 32] >> (bits_number % 32)) & 1){
+        if (s21_big_get_bit(&a_copy, bits_number)){
             s21_bitwise_addition(&temp, &one, &temp);
         }
 
@@ -250,76 +263,225 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
     s21_set_scale(result, scale_a);
     s21_set_sign(result, result_sign);
 
+    return S21_OK;
+}
+
+int s21_sub(s21_decimal value_1, s21_decimal value_2, s21_decimal *result){
+    s21_decimal reverse_value_2 = value_2;
+    s21_set_sign(&reverse_value_2, !s21_get_sign(&value_2)); 
+    
+    return s21_add(value_1, reverse_value_2, result);
+}
+
+int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result){
+
+    *result = (s21_decimal){{0}};
+    s21_big_decimal a, b, res = {0};
+    s21_from_decimal_to_big(value_1, &a);
+    s21_from_decimal_to_big(value_2, &b);
+    int scale_a = s21_get_scale(&value_1);
+    int scale_b = s21_get_scale(&value_2);
+    int sign_a = s21_get_sign(&value_1);
+    int sign_b = s21_get_sign(&value_2);
+    int result_sign = (sign_a != sign_b) ? 1 : 0;
+    int result_scale = scale_a + scale_b;
+    s21_big_decimal temp = {0};
+
+    for (int i = 0; i < 96; i++) {
+        if (s21_big_get_bit(&b, i)) {
+            s21_big_decimal shifted_a = a;
+            s21_shift_left(&shifted_a, i);
+            s21_bitwise_addition(&temp, &shifted_a, &temp);
+        }
+    }
+
+    while (result_scale > 28) {
+        int last_digit_before_division = last_digit(&temp, 10);
+        s21_big_decimal divided = {0};
+        s21_div_big_10(&temp, &divided);
+    
+        if (last_digit_before_division > 5 || 
+            (last_digit_before_division == 5 && (s21_big_get_bit(&divided, 0) & 1))) {
+            s21_big_decimal one = {{1, 0, 0, 0, 0, 0, 0}};
+            s21_bitwise_addition(&divided, &one, &divided);
+        }  
+        temp = divided;
+        result_scale--;
+    }
+
+     if (s21_is_out_of_96_bits(temp)) {
+        if (s21_reduce_and_round(&temp, &result_scale)) {
+            return (result_sign) ? 2 : 1; 
+        }
+    }
+
+    if (s21_from_big_to_decimal(temp, result)) {
+        return (result_sign) ? 2 : 1;
+    }
+
+    s21_set_scale(result, result_scale);
+    s21_set_sign(result, result_sign);
+    return S21_OK;
+}
+
+
+ void s21_big_div(s21_big_decimal a, s21_big_decimal b, s21_big_decimal* result, s21_big_decimal* temp){
+    s21_big_decimal one = {{1, 0, 0, 0, 0, 0, 0}};
+    int bits_number = s21_find_oldest_positive_bit(&a);
+
+    while (bits_number >= 0) {
+        s21_shift_left(temp, 1);
+        if (s21_big_get_bit(&a, bits_number)){
+            s21_bitwise_addition(temp, &one, temp);
+        }
+
+        if (s21_big_is_greater_or_equal(*temp, b)) {
+            s21_shift_left(result, 1);
+            s21_bitwise_addition(result, &one, result);
+            s21_big_subtraction(temp, &b, temp);
+        } else {
+            s21_shift_left(result, 1);
+        }
+        bits_number--;
+    }
+ }
+
+int s21_big_is_zero(s21_big_decimal* val) {
+    for (int i = 0; i < 7; i++) {
+        if (val->bits[i] != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result){
+    if (value_2.bits[0] == 0 && value_2.bits[1] == 0 && value_2.bits[2] == 0){
+        return 3;
+    }
+     
+    *result = (s21_decimal){{0}};
+    s21_big_decimal a, b, res = {0};
+    s21_from_decimal_to_big(value_1, &a);
+    s21_from_decimal_to_big(value_2, &b);
+    int scale_a = s21_get_scale(&value_1);
+    int scale_b = s21_get_scale(&value_2);
+    int sign_a = s21_get_sign(&value_1);
+    int sign_b = s21_get_sign(&value_2);
+    int result_sign = (sign_a != sign_b) ? 1 : 0;
+    int result_scale = scale_a - scale_b;
+    
+    s21_big_decimal remainder = {0};
+    s21_big_div(a, b, &res, &remainder);
+
+    int added_precision = 0;
+    const int max_added_precision = 28;
+    
+    while (!s21_big_is_zero(&remainder) && added_precision < max_added_precision && result_scale < 28) {
+        s21_mul_ten(&remainder); 
+        added_precision++;
+        result_scale++; 
+        s21_big_decimal new_quotient_digit = {{0}};
+        s21_big_decimal new_remainder = {{0}};
+        s21_big_div(remainder, b, &new_quotient_digit, &new_remainder);
+        s21_mul_ten(&res);
+        s21_bitwise_addition(&res, &new_quotient_digit, &res);
+        remainder = new_remainder;
+    }
+
+    if (result_scale < 0) {
+        int scale_reverse = -result_scale;
+        for (int i = 0; i < scale_reverse && i < 28; i++) {
+             s21_mul_ten(&res);
+        }
+        result_scale = 0; 
+    } 
+  
+    if (s21_is_out_of_96_bits(res)) {
+        if (s21_reduce_and_round(&res, &result_scale)) {
+            return (result_sign) ? 2 : 1; 
+        }
+    }
+
+    if (s21_from_big_to_decimal(res, result)) {
+        return (result_sign) ? 2 : 1;
+    }
+
+    s21_set_scale(result, result_scale);
+    s21_set_sign(result, result_sign);
+
     return 0;
 }
 
-//////////////////////////////////// Hi!
+///////////////////////////////////////////////////////
 
-// int s21_is_less(s21_decimal a, s21_decimal b){
-//     int result = 0;
+int s21_is_less(s21_decimal a, s21_decimal b){
+    int result = 0;
+
+    s21_big_decimal c = {0};
+    s21_big_decimal d = {0};
+    s21_from_decimal_to_big(a, &c);
+    s21_from_decimal_to_big(b, &d);
+
+    s21_normalize_big_decimals(&c, &d, s21_get_scale(&a), s21_get_scale(&b)); 
     
-//     s21_normalize_big_decimals(&a, &b, s21_get_scale(&a), s21_get_scale(&b)); //выравниваем экспоненты
+    int sign_a = s21_get_sign(&a); 
+    int sign_b = s21_get_sign(&b); 
+    int abs_cmp = s21_abs_compare(c, d);
+
+    if (sign_a != sign_b) {
+        result = sign_a;  
+        }
+    else if (sign_a == 1) {
+        result = (abs_cmp == 1);
+    }
+    else {
+        result = (abs_cmp == -1);
+    }
+    return result;
+}
+
+int s21_abs_compare(s21_big_decimal a, s21_big_decimal b) {
+    int result = 0; 
     
-//     int sign_a = s21_get_sign(&a); //получаем знак а
-//     int sign_b = s21_get_sign(&b); //получаем знак b
-//     int abs_cmp = s21_abs_compare(a, b);
-    
-//     // Если знаки разные, отрицательное всегда меньше
-//     if (sign_a != sign_b) {
-//         result = sign_a; //если а отриц, то а < b и мы возвращаем знак а(1, а это true),если а полож, то a > b, это false и мы возвращаем знак 0 (то, что и нужно) 
-//         }
-//         // 2. Если оба отрицательные
-//     else if (sign_a == 1) {
-//         // Для отрицательных: больше модуль → меньше число
-//         result = (abs_cmp == 1);
-//     }
-//     // 3. Если оба положительные
-//     else {
-//         // Для положительных: меньше модуль → меньше число
-//         result = (abs_cmp == -1);
-//     }
+    for (int i = 6; i >= 0 && result == 0; i--) {
+        if (a.bits[i] > b.bits[i]) {
+            result = 1;
+        } else if (a.bits[i] < b.bits[i]) {
+            result = -1;
+        }
+    }
+    return result;
+}
 
-//     return result;
-// }
+int s21_is_equal(s21_decimal a, s21_decimal b){
+    int result = 1;
 
-// int s21_abs_compare(s21_decimal a, s21_decimal b) {
-//     int result = 0;  // По умолчанию считаем числа равными
-    
-//     // Сравниваем биты от старших к младшим
-//     for (int i = 2; i >= 0 && result == 0; i--) {
-//         if (a.bits[i] > b.bits[i]) {
-//             result = 1;
-//         } else if (a.bits[i] < b.bits[i]) {
-//             result = -1;
-//         }
-//     }
-    
-//     return result;
-// }
+    s21_big_decimal c = {0};
+    s21_big_decimal d = {0};
+    s21_from_decimal_to_big(a, &c);
+    s21_from_decimal_to_big(b, &d);
 
-// int s21_is_equal(s21_decimal a, s21_decimal b){
-//     int result = 1;
+    s21_normalize_decimals(&c, &d, s21_get_scale(&a), s21_get_scale(&b));
 
-//      s21_normalize_decimals(&a, &b, s21_get_scale(&a), s21_get_scale(&b));
+    int sign_a = s21_get_sign(&a); 
+    int sign_b = s21_get_sign(&b); 
 
-//     int sign_a = s21_get_sign(&a); //получаем знак а
-//     int sign_b = s21_get_sign(&b); //получаем знак b
+if(sign_a != sign_b){
+    result = (s21_is_zero(a) && s21_is_zero(b));
+} else { 
+for (int i = 0; i < 3; i++) {
+    if (a.bits[i] != b.bits[i]) {
+        result = 0;
+}
+}
+}
+return result;
+}
 
-// if(sign_a != sign_b){
-//     result = (s21_is_zero(a) && s21_is_zero(b));
-// } else { 
-// for (int i = 0; i < 3; i++) {
-//     if (a.bits[i] != b.bits[i]) {
-//         result = 0;
-// }
-// }
-// }
-// return result;
-// }
-
-// int s21_is_zero(s21_decimal dec) {
-//     return dec.bits[0] == 0 && dec.bits[1] == 0 && dec.bits[2] == 0;
-// }
+int s21_is_zero(s21_decimal dec) {
+    return dec.bits[0] == 0 && dec.bits[1] == 0 && dec.bits[2] == 0;
+}
 
 // int s21_is_less_or_equal(s21_decimal a, s21_decimal b) {
 //     return s21_is_less(a, b) || s21_is_equal(a, b);
@@ -336,6 +498,13 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
 // int s21_is_greater_or_equal(s21_decimal a, s21_decimal b) {
 //     return !s21_is_less(a, b);
 // }
+
+
+
+
+
+
+
 
 // // Округляет указанное Decimal число до ближайшего целого числа в сторону
 // // отрицательной бесконечности.
@@ -407,7 +576,6 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
 //   s21_set_sign(result, sign);
 //   return S21_OK;
 // }
-
 // // Возвращает целые цифры указанного Decimal числа; любые дробные цифры
 // // отбрасываются, включая конечные нули.
 // int s21_truncate(s21_decimal value, s21_decimal *result) {
@@ -447,6 +615,5 @@ int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result) {
 //   s21_set_sign(result, !s21_get_sign(&value));
 //   return S21_OK;
 // }
-
 
 
