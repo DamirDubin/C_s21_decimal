@@ -811,8 +811,29 @@ static double round_to_significant_figures(double value, int figures) {
     return round(value * magnitude) / magnitude;
 }
 
-static void parse_number_parts(char *dot_pos, const char* buffer, long long* int_part, 
+static void parse_number_parts(const char* buffer, long long* int_part, 
                       long long* frac_part, int* scale) {
+    // char* dot_pos = strchr(buffer, '.');
+    // if (dot_pos) {
+    //     *dot_pos = '\0';  // Отделяем целую часть
+    //     *int_part = atoll(buffer);
+    //     *frac_part = atoll(dot_pos + 1);
+    //     *scale = strlen(dot_pos + 1);  // Количество цифр после точки
+    // } else {
+    //     *int_part = atoll(buffer);
+    // }
+    // Обработка экспоненциальной записи
+    char* e_pos = strchr(buffer, 'e');
+    if (!e_pos) e_pos = strchr(buffer, 'E');
+    
+    int extra_scale = 0;
+    if (e_pos) {
+        *e_pos = '\0';  // Отделяем мантиссу от экспоненты
+        extra_scale = atoi(e_pos + 1);
+    }
+
+    // Обработка десятичной точки
+    char* dot_pos = strchr(buffer, '.');
     if (dot_pos) {
         *dot_pos = '\0';  // Отделяем целую часть
         *int_part = atoll(buffer);
@@ -820,8 +841,21 @@ static void parse_number_parts(char *dot_pos, const char* buffer, long long* int
         *scale = strlen(dot_pos + 1);  // Количество цифр после точки
     } else {
         *int_part = atoll(buffer);
+        *frac_part = 0;
+        *scale = 0;
     }
     
+    // Корректировка масштаба для экспоненциальной записи
+    if (e_pos) {
+        *scale -= extra_scale;
+    }
+    
+    // Гарантируем, что масштаб не отрицательный
+    if (*scale < 0) {
+        *int_part *= pow(10, -*scale);
+        *frac_part = 0;
+        *scale = 0;
+    }
 }
 
 int s21_from_float_to_decimal(float src, s21_decimal* dst) {
@@ -843,24 +877,42 @@ int s21_from_float_to_decimal(float src, s21_decimal* dst) {
     uint32_t mantissa = (float_bits & 0x7FFFFF) | 0x800000;
 
     double temp = (double)mantissa * pow(2, exponent - 23);
-    temp = round_to_significant_figures(temp, 7);
+    // temp = round_to_significant_figures(temp, 7);
+
+    // 1. Проверка порядка величины ДО округления
+    if (fabs(temp) < 1e-28) {
+        return S21_ERROR_CONV;  // Слишком малое число
+    }
+
+    // 2. Округление только если число достаточно большое
+    if (fabs(temp) >= 1e-7) {  // Порог для округления
+        temp = round_to_significant_figures(temp, 7);
+
+        if (fabs(temp) > MAX_DECIMAL) {
+          return S21_ERROR_CONV;
+        }
+    } else {
+        temp = 0.0;
+    }
 
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "%.7g", temp);
 
-    char *dot_pos = strchr(buffer, '.');  // Разбираем строку на целую и дробную части
+    // char *dot_pos = strchr(buffer, '.');  // Разбираем строку на целую и дробную части
     long long int_part = 0;
     long long frac_part = 0;
     int scale = 0;
 
-    parse_number_parts(dot_pos, buffer, &int_part, &frac_part, &scale);
+    parse_number_parts(buffer, &int_part, &frac_part, &scale);
 
     long long decimal_value = int_part;  // Объединяем целую и дробную части в одно целое число
-    for (int i = 0; i < scale; i++) {
-        decimal_value *= 10;
+    
+    if (frac_part != 0){
+      for (int i = 0; i < scale; i++) {
+          decimal_value *= 10;
+      }
+      decimal_value += frac_part;
     }
-
-    decimal_value += frac_part;
 
     dst->bits[0] = (int)(decimal_value & 0xFFFFFFFF);
     dst->bits[1] = (int)((decimal_value >> 32) & 0xFFFFFFFF);
