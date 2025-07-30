@@ -199,7 +199,8 @@ START_TEST(test_converters) {
                      123.456f, -789.012f, 1e-7f, 1e7f};
 
   for (size_t i = 0; i < sizeof(fvalues) / sizeof(fvalues[0]); i++) {
-    // if (fabsf(fvalues[i]) < 1e-28f || fabsf(fvalues[i]) > MAX_DECIMAL) continue;
+    // if (fabsf(fvalues[i]) < 1e-28f || fabsf(fvalues[i]) > MAX_DECIMAL)
+    // continue;
 
     s21_decimal d;
     int conv_res = s21_from_float_to_decimal(fvalues[i], &d);
@@ -645,7 +646,7 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_edge, test_boundaries);
   tcase_add_test(tc_edge, test_div_edge_cases);
   tcase_add_test(tc_edge, test_mul_edge_cases);
-  //tcase_add_test(tc_edge, test_normalization);
+  // tcase_add_test(tc_edge, test_normalization);
   suite_add_tcase(s, tc_edge);
 
   TCase *tc_convert_float = tcase_create("Converters");
@@ -659,7 +660,7 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_extended, test_sub_underflow);
   tcase_add_test(tc_extended, test_mul_overflow);
   tcase_add_test(tc_extended, test_div_zero);
-  //tcase_add_test(tc_extended, test_normalization_extreme);
+  // tcase_add_test(tc_extended, test_normalization_extreme);
   tcase_add_test(tc_extended, test_float_precision_loss);
   tcase_add_test(tc_extended, test_round_fractional);
   tcase_add_test(tc_extended, test_int_conversion_edge);

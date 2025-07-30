@@ -1,12 +1,12 @@
 #ifndef S21_DECIMAL_H
 #define S21_DECIMAL_H
 
+#include <limits.h>
 #include <math.h>    // fabs() pow()
 #include <stdint.h>  // uint32_t
-#include <string.h>
 #include <stdio.h>
-#include <stdlib.h> 
-#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define S21_OK 0
 #define S21_ERROR 1
@@ -37,13 +37,10 @@ typedef union {
   } parts;
 } float_parser;
 
-// Help functions
-void s21_init_decimal(s21_decimal* dec);
-//int s21_div_by_10(s21_decimal* value);
-
 // База Талгата
 void s21_shift_left(s21_big_decimal* num, int shift_value);
-void s21_bitwise_addition(s21_big_decimal* value_1, s21_big_decimal* value_2, s21_big_decimal* result);
+void s21_bitwise_addition(s21_big_decimal* value_1, s21_big_decimal* value_2,
+                          s21_big_decimal* result);
 void s21_big_set_bit(s21_big_decimal* value, int bit_number, int bit_value);
 int s21_big_get_bit(s21_big_decimal* value, int bit_number);
 void s21_set_sign(s21_decimal* az, int sign_value);
@@ -52,23 +49,24 @@ void s21_set_scale(s21_decimal* az, int scale_value);
 int s21_get_scale(s21_decimal* az);
 void s21_from_decimal_to_big(s21_decimal az, s21_big_decimal* big);
 int s21_from_big_to_decimal(s21_big_decimal big, s21_decimal* dec);
-int  s21_is_out_of_96_bits(s21_big_decimal d);
-void s21_big_subtraction(s21_big_decimal* a, s21_big_decimal* b, s21_big_decimal* res);
+int s21_is_out_of_96_bits(s21_big_decimal d);
+void s21_big_subtraction(s21_big_decimal* a, s21_big_decimal* b,
+                         s21_big_decimal* res);
 void s21_big_negate(s21_big_decimal* num, s21_big_decimal* result);
 int s21_big_is_greater_or_equal(s21_big_decimal a, s21_big_decimal b);
 int s21_reduce_and_round(s21_big_decimal* big, int* scale);
 void s21_mul_ten(s21_big_decimal* t);
-void s21_normalize_big_decimals(s21_big_decimal* a, s21_big_decimal* b, int* scale_a, int* scale_b);
-int last_digit(s21_big_decimal *big, int z);
+void s21_normalize_big_decimals(s21_big_decimal* a, s21_big_decimal* b,
+                                int* scale_a, int* scale_b);
+int last_digit(s21_big_decimal* big, int z);
 void s21_div_big_10(s21_big_decimal* a, s21_big_decimal* result);
 int s21_find_oldest_positive_bit(s21_big_decimal* a);
 int s21_add(s21_decimal value_1, s21_decimal value_2, s21_decimal* result);
-int s21_sub(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
-int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
-int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
+int s21_sub(s21_decimal value_1, s21_decimal value_2, s21_decimal* result);
+int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal* result);
+int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal* result);
 
 int s21_big_is_zero(s21_big_decimal* val);
-
 
 // Азовы функции
 int s21_get_bit(s21_decimal dec, int bit);
@@ -92,5 +90,9 @@ int s21_floor(s21_decimal value, s21_decimal* result);
 int s21_round(s21_decimal value, s21_decimal* result);
 int s21_truncate(s21_decimal value, s21_decimal* result);
 int s21_negate(s21_decimal value, s21_decimal* result);
+
+// Help functions
+void s21_init_decimal(s21_decimal* dec);
+int s21_div_by_10(s21_decimal* value);
 
 #endif
