@@ -39,9 +39,7 @@ typedef union {
 
 // Help functions
 void s21_init_decimal(s21_decimal* dec);
-int s21_div_by_10(s21_decimal* value);
-int s21_mul_by_10(s21_decimal* value);
-void s21_normalize_exponents(s21_decimal* a, s21_decimal* b);
+//int s21_div_by_10(s21_decimal* value);
 
 // База Талгата
 void s21_shift_left(s21_big_decimal* num, int shift_value);
@@ -81,7 +79,7 @@ int s21_from_decimal_to_float(s21_decimal src, float* dst);
 
 // Ивангелие от Yana
 int s21_is_less(s21_decimal a, s21_decimal b);
-int s21_abs_compare(s21_decimal a, s21_decimal b);
+int s21_abs_compare(s21_big_decimal a, s21_big_decimal b);
 int s21_is_equal(s21_decimal, s21_decimal);
 int s21_is_zero(s21_decimal dec);
 int s21_is_less_or_equal(s21_decimal a, s21_decimal b);

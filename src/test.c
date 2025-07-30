@@ -402,15 +402,15 @@ START_TEST(test_mul_edge_cases) {
 }
 END_TEST
 
-START_TEST(test_normalization) {
-  s21_decimal a, b;
-  s21_from_float_to_decimal(1.5f, &a);
-  s21_from_float_to_decimal(2.25f, &b);
+// START_TEST(test_normalization) {
+//   s21_decimal a, b;
+//   s21_from_float_to_decimal(1.5f, &a);
+//   s21_from_float_to_decimal(2.25f, &b);
 
-  s21_normalize_exponents(&a, &b);
-  ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
-}
-END_TEST
+//   s21_normalize_exponents(&a, &b);
+//   ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
+// }
+// END_TEST
 
 START_TEST(test_add_overflow_positive) {
   s21_decimal max = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0}};
@@ -452,14 +452,14 @@ START_TEST(test_div_zero) {
 }
 END_TEST
 
-START_TEST(test_normalization_extreme) {
-  s21_decimal a = {{123, 0, 0, 0x00020000}};
-  s21_decimal b = {{456, 0, 0, 0}};
-  s21_normalize_exponents(&a, &b);
-  ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
-  ck_assert_uint_eq(b.bits[0], 45600);
-}
-END_TEST
+// START_TEST(test_normalization_extreme) {
+//   s21_decimal a = {{123, 0, 0, 0x00020000}};
+//   s21_decimal b = {{456, 0, 0, 0}};
+//   s21_normalize_exponents(&a, &b);
+//   ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
+//   ck_assert_uint_eq(b.bits[0], 45600);
+// }
+// END_TEST
 
 START_TEST(test_float_precision_loss) {
   float src = 0.1234567890123456789012345678f;
@@ -560,28 +560,6 @@ START_TEST(test_rounding_negative) {
 }
 END_TEST
 
-// START_TEST(test_bit_shifts) {
-//   s21_decimal value = {{1, 0, 0, 0}};
-
-//   for (int i = 0; i < 95; i++) {
-//     int overflow = s21_shift_left(&value);
-//     ck_assert_int_eq(overflow, 0);
-//   }
-
-//   ck_assert_uint_eq((unsigned int)value.bits[2], 0x80000000);
-//   ck_assert_uint_eq(value.bits[1], 0);
-//   ck_assert_uint_eq(value.bits[0], 0);
-
-//   for (int i = 0; i < 95; i++) {
-//     s21_shift_right(&value);
-//   }
-
-//   ck_assert_uint_eq(value.bits[0], 1);
-//   ck_assert_uint_eq(value.bits[1], 0);
-//   ck_assert_uint_eq(value.bits[2], 0);
-// }
-// END_TEST
-
 START_TEST(test_fractional_arithmetic) {
   s21_decimal a, b, result;
   s21_from_float_to_decimal(0.1f, &a);
@@ -667,7 +645,7 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_edge, test_boundaries);
   tcase_add_test(tc_edge, test_div_edge_cases);
   tcase_add_test(tc_edge, test_mul_edge_cases);
-  tcase_add_test(tc_edge, test_normalization);
+  //tcase_add_test(tc_edge, test_normalization);
   suite_add_tcase(s, tc_edge);
 
   TCase *tc_convert_float = tcase_create("Converters");
@@ -681,14 +659,13 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_extended, test_sub_underflow);
   tcase_add_test(tc_extended, test_mul_overflow);
   tcase_add_test(tc_extended, test_div_zero);
-  tcase_add_test(tc_extended, test_normalization_extreme);
+  //tcase_add_test(tc_extended, test_normalization_extreme);
   tcase_add_test(tc_extended, test_float_precision_loss);
   tcase_add_test(tc_extended, test_round_fractional);
   tcase_add_test(tc_extended, test_int_conversion_edge);
   tcase_add_test(tc_extended, test_zero_operations);
   tcase_add_test(tc_extended, test_negative_operations);
   tcase_add_test(tc_extended, test_rounding_negative);
-  // tcase_add_test(tc_extended, test_bit_shifts);
   tcase_add_test(tc_extended, test_fractional_arithmetic);
   tcase_add_test(tc_extended, test_float_boundaries);
   suite_add_tcase(s, tc_extended);
