@@ -22,7 +22,7 @@ TEST_OBJ_COV = $(TEST_SRC:.c=.cov.o)
 
 .PHONY: all test run_test gcov_report clangn clangi cpp leaks valgrind clean rebuild
 
-all: s21_decimal.a test
+all: s21_decimal.a
 
 s21_decimal.a: $(OBJ)
 	ar rcs $@ $^

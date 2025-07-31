@@ -85,7 +85,7 @@ void s21_from_decimal_to_big(s21_decimal az, s21_big_decimal* big) {
 
 int s21_from_big_to_decimal(s21_big_decimal big, s21_decimal* dec) {
   if (big.bits[3] || big.bits[4] || big.bits[5] || big.bits[6]) {
-    return S21_ERROR;
+    return 1;
   }
 
   for (int i = 0; i < 3; i++) {

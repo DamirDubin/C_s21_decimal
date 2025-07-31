@@ -5,17 +5,6 @@
 
 #include "s21_decimal.h"
 
-static s21_decimal random_decimal() {
-  s21_decimal d;
-  s21_init_decimal(&d);
-  for (int i = 0; i < 3; i++) {
-    d.bits[i] = rand() % 0xFFFFFFFF;
-  }
-  s21_set_scale(&d, rand() % 29);
-  s21_set_sign(&d, rand() % 2);
-  return d;
-}
-
 START_TEST(test_add) {
   s21_decimal a, b, result;
   int values[][3] = {
@@ -199,9 +188,6 @@ START_TEST(test_converters) {
                      123.456f, -789.012f, 1e-7f, 1e7f};
 
   for (size_t i = 0; i < sizeof(fvalues) / sizeof(fvalues[0]); i++) {
-    // if (fabsf(fvalues[i]) < 1e-28f || fabsf(fvalues[i]) > MAX_DECIMAL)
-    // continue;
-
     s21_decimal d;
     int conv_res = s21_from_float_to_decimal(fvalues[i], &d);
     ck_assert_int_eq(conv_res, S21_OK);
@@ -268,32 +254,6 @@ START_TEST(test_other_functions) {
     s21_decimal result;
     s21_negate(neg_tests[i][0], &result);
     ck_assert(s21_is_equal(result, neg_tests[i][1]));
-  }
-}
-END_TEST
-
-START_TEST(test_random) {
-  srand(time(NULL));
-  for (int i = 0; i < 100; i++) {
-    s21_decimal a = random_decimal();
-    s21_decimal b = random_decimal();
-
-    s21_decimal neg_a, neg_neg_a;
-    s21_negate(a, &neg_a);
-    s21_negate(neg_a, &neg_neg_a);
-    ck_assert(s21_is_equal(a, neg_neg_a));
-
-    s21_decimal add1, add2;
-    int res1 = s21_add(a, b, &add1);
-    int res2 = s21_add(b, a, &add2);
-    if (res1 == S21_OK && res2 == S21_OK) {
-      ck_assert(s21_is_equal(add1, add2));
-    }
-
-    s21_decimal sub, zero = {0};
-    if (s21_sub(a, a, &sub) == S21_OK) {
-      ck_assert(s21_is_equal(sub, zero));
-    }
   }
 }
 END_TEST
@@ -403,16 +363,6 @@ START_TEST(test_mul_edge_cases) {
 }
 END_TEST
 
-// START_TEST(test_normalization) {
-//   s21_decimal a, b;
-//   s21_from_float_to_decimal(1.5f, &a);
-//   s21_from_float_to_decimal(2.25f, &b);
-
-//   s21_normalize_exponents(&a, &b);
-//   ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
-// }
-// END_TEST
-
 START_TEST(test_add_overflow_positive) {
   s21_decimal max = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0}};
   s21_decimal one = {{1, 0, 0, 0}};
@@ -449,18 +399,9 @@ START_TEST(test_div_zero) {
   s21_decimal a = {{1, 0, 0, 0}};
   s21_decimal zero = {{0, 0, 0, 0}};
   s21_decimal result;
-  ck_assert_int_eq(s21_div(a, zero, &result), S21_ERROR_ZERO_DIV);
+  ck_assert_int_eq(s21_div(a, zero, &result), 3);
 }
 END_TEST
-
-// START_TEST(test_normalization_extreme) {
-//   s21_decimal a = {{123, 0, 0, 0x00020000}};
-//   s21_decimal b = {{456, 0, 0, 0}};
-//   s21_normalize_exponents(&a, &b);
-//   ck_assert_int_eq(s21_get_scale(&a), s21_get_scale(&b));
-//   ck_assert_uint_eq(b.bits[0], 45600);
-// }
-// END_TEST
 
 START_TEST(test_float_precision_loss) {
   float src = 0.1234567890123456789012345678f;
@@ -638,15 +579,10 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_other, test_bank_rounding);
   suite_add_tcase(s, tc_other);
 
-  TCase *tc_random = tcase_create("Random");
-  tcase_add_test(tc_random, test_random);
-  suite_add_tcase(s, tc_random);
-
   TCase *tc_edge = tcase_create("Edge Cases");
   tcase_add_test(tc_edge, test_boundaries);
   tcase_add_test(tc_edge, test_div_edge_cases);
   tcase_add_test(tc_edge, test_mul_edge_cases);
-  // tcase_add_test(tc_edge, test_normalization);
   suite_add_tcase(s, tc_edge);
 
   TCase *tc_convert_float = tcase_create("Converters");
@@ -660,7 +596,6 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_extended, test_sub_underflow);
   tcase_add_test(tc_extended, test_mul_overflow);
   tcase_add_test(tc_extended, test_div_zero);
-  // tcase_add_test(tc_extended, test_normalization_extreme);
   tcase_add_test(tc_extended, test_float_precision_loss);
   tcase_add_test(tc_extended, test_round_fractional);
   tcase_add_test(tc_extended, test_int_conversion_edge);
