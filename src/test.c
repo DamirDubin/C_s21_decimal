@@ -555,6 +555,39 @@ START_TEST(test_float_boundaries) {
 }
 END_TEST
 
+START_TEST(test_mul_scale_overflow) {
+  s21_decimal a = {{1000000000, 0, 0, 0x000F0000}};
+  s21_decimal b = a;
+  s21_decimal result;
+
+  int res = s21_mul(a, b, &result);
+  ck_assert_int_eq(res, S21_OK);
+  ck_assert_int_eq(s21_get_scale(&result), 28);
+}
+END_TEST
+
+START_TEST(test_reduce_and_round_triggers) {
+  s21_decimal a = {{0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00010000}};
+  s21_decimal b = {{10, 0, 0, 0}};
+  s21_decimal result;
+
+  int res = s21_mul(a, b, &result);
+  ck_assert_int_eq(res, S21_OK);
+}
+END_TEST
+
+START_TEST(test_div_high_precision) {
+  s21_decimal a = {{1, 0, 0, 0}};
+  s21_decimal b = {{3, 0, 0, 0}};
+  s21_decimal result = {0};
+
+  s21_set_scale(&a, 28);
+  int res = s21_div(a, b, &result);
+  ck_assert_int_eq(res, S21_OK);
+  ck_assert_int_le(s21_get_scale(&result), 28);
+}
+END_TEST
+
 Suite *decimal_suite(void) {
   Suite *s = suite_create("s21_decimal");
 
@@ -604,8 +637,10 @@ Suite *decimal_suite(void) {
   tcase_add_test(tc_extended, test_rounding_negative);
   tcase_add_test(tc_extended, test_fractional_arithmetic);
   tcase_add_test(tc_extended, test_float_boundaries);
+  tcase_add_test(tc_extended, test_mul_scale_overflow);
+  tcase_add_test(tc_extended, test_reduce_and_round_triggers);
+  tcase_add_test(tc_extended, test_div_high_precision);
   suite_add_tcase(s, tc_extended);
-
   return s;
 }
 
